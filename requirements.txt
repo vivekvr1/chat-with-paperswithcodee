@@ -1,0 +1,11 @@
+aiohttp
+charset-normalizer
+click
+dotenv
+langchain
+langchain-community
+upstash-vector
+tqdm
+langchain-google-vertexai 
+streamlit
+langchain-openai
