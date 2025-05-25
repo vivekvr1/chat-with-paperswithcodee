@@ -1,3 +1,4 @@
 config:
   gcp:project: krishai-455907
   streamlit-cloudrun:region: us-central1
+  streamlit-cloudrun:app-name: streamlit-app

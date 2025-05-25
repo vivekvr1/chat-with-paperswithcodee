@@ -86,7 +86,7 @@ service = gcp.cloudrun.Service("streamlit-service",
         metadata=gcp.cloudrun.ServiceTemplateMetadataArgs(
             annotations={
                 "autoscaling.knative.dev/minScale": "0",
-                "autoscaling.knative.dev/maxScale": "3",
+                "autoscaling.knative.dev/maxScale": "2",
                 "run.googleapis.com/cpu-throttling": "false"
             }
         )

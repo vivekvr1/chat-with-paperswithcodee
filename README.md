@@ -49,8 +49,6 @@ gcloud builds submit --tag gcr.io/krishai-455907/rag --timeout=2h
 # Google App Engine
 
 ```
-gcloud auth configure-docker
-gcloud builds submit --tag gcr.io/krishai-455907/rag --timeout=2h
 gcloud config get-value project\n
 gcloud projects add-iam-policy-binding krishai-455907     --member="user:paul.visionai@gmail.com"     --role="roles/cloudbuild.builds.editor"
 gcloud services enable cloudbuild.googleapis.com\n
@@ -64,7 +62,20 @@ gcloud app deploy
 
 # PULUMI
 ```
+gcloud auth application-default login
+
+# Set your project ID
+pulumi config set project-id krishai-455907
+
+# Set other configurations (optional)
+pulumi config set region us-central1
+pulumi config set app-name streamlit-app
+
 pip install pulumi pulumi-gcp pulumi-docker
 pulumi stack init dev
 pulumi up
+pulumi destroy
+pulumi stack rm [<stack-name>] --force
+pulumi stack ls
+pulumi version
 ```
