@@ -1,87 +1,70 @@
-This repo contains the code for building a RAG-based assistant to chat with Papers With Code.
+# RAG-based Assistant to Chat with Papers With Code
 
-### 0. Some requirements
+This repository contains the code for building a RAG-based assistant to chat with Papers With Code using Streamlit.
+
+## Requirements
 
 - A GCP account with VertexAI and Cloud Run services activated
-- An OpenAI key
+- An OpenAI API key
 - A free account on [Upstash](https://upstash.com/) (serverless database)
+- Pulumi installed and configured
 
-
-### 1.  Indexing
+## 1. Indexing
 
 To index data into the vector DB, you first need to create an index on Upstash and fill in the credentials in the `.env` file:
 
-```
-UPSTASH_URL=...
-UPSTASH_TOKEN=...
-```
-
-Then you have to run this command:
-
-```bash
-poetry run python -m src.index_papers --query "OpenAI" --limit 200
+```plaintext
+UPSTASH_VECTOR_REST_URL=...
+UPSTASH_VECTOR_REST_TOKEN=...
+OPENAI_API_KEY=...
 ```
 
-Here's the result of indexing 200 chunks matching the "OpenAI" query.
+# APP LEVEL COMMANDS
 
-![](./assets/indexing.png)
+```
+python src/paperswithcode.py
+python src/index_papers.py test --query "openai" --max_papers 5
+python src/index_papers.py test-upstash
+python src/index_papers.py index --query "openai" --max_papers 20
+python src/brag.py
+streamlit run bapp.py --theme.primaryColor "#135aaf"
 
+docker build -t streamlit-papers-app .
+docker run -d  --name papers-chat   -p 8501:8501  -e OPENAI_API_KEY="$(grep OPENAI_API_KEY .env | cut -d '=' -f2)" -e UPSTASH_VECTOR_REST_URL="$(grep UPSTASH_VECTOR_REST_URL .env | cut -d '=' -f2)"   -e UPSTASH_VECTOR_REST_TOKEN="$(grep UPSTASH_VECTOR_REST_TOKEN .env | cut -d '=' -f2)"  streamlit-papers-app
+OR
+docker run -d --name papers-chat -p 8501:8501 --env-file .env streamlit-papers-app
+OR
+docker run -d   --name papers-chat   -p 8501:8501   streamlit-papers-app
 
-### 2. Run the Streamlit application locally to interact with the RAG
-
-
-```bash
-poetry run python -m streamlit run  src/app.py --theme.primaryColor "#135aaf"
+docker exec -it container_id bash
 ```
 
-![](./assets/rag-upstash.gif)
+# Google Cloud Run
 
-
-### 3. Deploy the application to Cloud Run
-
-Follow these steps:
-
-Build the Docker image locally:
-
-```bash
-docker build -t chat-pwc .
+```
+gcloud auth configure-docker
+gcloud builds submit --tag gcr.io/krishai-455907/rag --timeout=2h
 ```
 
-Push the image to container registry:
+# Google App Engine
 
-```bash
-gcloud builds submit --tag gcr.io/<PROJECT_ID>/pwc-rag --timeout=2h
 ```
-![](./assets/push_image.png)
+gcloud auth configure-docker
+gcloud builds submit --tag gcr.io/krishai-455907/rag --timeout=2h
+gcloud config get-value project\n
+gcloud projects add-iam-policy-binding krishai-455907     --member="user:paul.visionai@gmail.com"     --role="roles/cloudbuild.builds.editor"
+gcloud services enable cloudbuild.googleapis.com\n
+gcloud auth list
+gcloud config list
+gcloud projects get-iam-policy $(gcloud config get-value project)
+gcloud builds submit --tag gcr.io/krishai-455907/rag --timeout=2h
+gcloud services enable appengine.googleapis.com
+gcloud app deploy
+```
 
-Connect to GCP console, go to Cloud Run service and hit the button "Create service":
-
-![](./assets/cloud_run.png)
-
-Fill in these parameters:
-
-- The container image URL and the region
-
-![](./assets/container_registry_region.png)
-
-- The container port (To match the value mentioned in the Dockerfile=80)
-
-![](./assets/port_value.png)
-
-- The secrets that will be injected as environment variables
-
-![](./assets/var_env.png)
-
-- Activate unathenticated invocations
-
-![](./assets/invocations.png)
-
-Then hit the create button:
-
-- Once the service created, you'll see the corresponding URL
-
-![](./assets/app_url.png)
-
-Now you can visit the app:
-
-![](./assets/deployed_app.png)
+# PULUMI
+```
+pip install pulumi pulumi-gcp pulumi-docker
+pulumi stack init dev
+pulumi up
+```
