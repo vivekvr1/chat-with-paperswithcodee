@@ -2,7 +2,7 @@ import os
 from dotenv import load_dotenv
 import streamlit as st
 from langchain_openai import OpenAIEmbeddings  # Changed from VertexAI to OpenAI
-from src.rag import RAG
+from rag import RAG
 
 st.set_page_config(
     page_title="Chat with Papers",

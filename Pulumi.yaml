@@ -1,0 +1,4 @@
+name: streamlit-cloudrun
+runtime: python
+description: Streamlit app on Google Cloud Run
+

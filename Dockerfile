@@ -1,34 +1,52 @@
-FROM python:3.11-slim as builder
+# Use Python 3.11 slim image
+FROM python:3.11-slim
 
-ARG user=app_user
-ARG group=${user}
-ARG uid=1010
-ARG gid=1010
+# Set working directory
+WORKDIR /app
 
-ARG APP_DIR=/app
+# Set environment variables
+ENV PYTHONPATH=/app
+ENV PYTHONUNBUFFERED=1
 
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    curl \
+    software-properties-common \
+    && rm -rf /var/lib/apt/lists/*
 
+# Copy requirements first (for better Docker layer caching)
+COPY requirements.txt .
 
-RUN apt-get -y -q update && \
-    apt-get -y -q install --no-install-recommends curl &&  | python - --version 1.3.2
+# Install Python dependencies
+RUN pip install --no-cache-dir -r requirements.txt
 
+# Copy application files
+COPY . .
 
+# Create non-root user for security
+RUN useradd -m -u 1000 streamlit && chown -R streamlit:streamlit /app
+USER streamlit
 
-WORKDIR $APP_DIR
-COPY requirements.txt ./
-RUN find . | grep -E "(__pycache__|\.pyc$)" | xargs rm -rf
-RUN pip install -r requiremnts.txt
+# Expose Streamlit port
+#EXPOSE 8501
+EXPOSE 8080
 
-FROM python:3.11-slim as runtime
+# Health check
+HEALTHCHECK CMD curl --fail http://localhost:8501/_stcore/health
 
-ENV VIRTUAL_ENV=/app/.venv \
-    PATH="/app/.venv/bin:$PATH" \
-    PROJECT_ID="playground-351113"
+# Create entrypoint script for better environment handling
+USER root
+RUN echo '#!/bin/bash\n\
+echo "🔍 Environment Check:"\n\
+echo "OPENAI_API_KEY: $(echo $OPENAI_API_KEY | cut -c1-10)...$(echo $OPENAI_API_KEY | tail -c5)"\n\
+echo "UPSTASH_VECTOR_REST_URL: $UPSTASH_VECTOR_REST_URL"\n\
+echo "UPSTASH_VECTOR_REST_TOKEN: $(echo $UPSTASH_VECTOR_REST_TOKEN | cut -c1-10)...$(echo $UPSTASH_VECTOR_REST_TOKEN | tail -c5)"\n\
+echo "Starting Streamlit..."\n\
+exec streamlit run bapp.py --server.port=8080 --server.address=0.0.0.0 --server.headless=true --server.fileWatcherType=none\n\
+' > /app/entrypoint.sh && chmod +x /app/entrypoint.sh
 
-COPY --from=builder ${VIRTUAL_ENV} ${VIRTUAL_ENV}
+USER streamlit
 
-COPY src src
-
-ENV PORT 80
-
-ENTRYPOINT [ "python", "-m", "streamlit", "run", "src/app.py", "--server.port=80", "--server.address=0.0.0.0", "--theme.primaryColor=#135aaf"]
+# Use entrypoint script
+CMD ["/app/entrypoint.sh"]

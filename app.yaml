@@ -1,0 +1,45 @@
+runtime: python
+env: flex
+runtime_config:
+    operating_system: "ubuntu22"
+    runtime_version: "3.13"
+
+
+# # Optional: Specify the instance class
+# instance_class: F2
+
+# # Optional: Automatic scaling settings
+# automatic_scaling:
+#   min_num_instances: 1
+#   max_num_instances: 5
+#   cpu_utilization:
+#     target_utilization: 0.6
+
+# Optional: Environment variables
+env_variables:
+  OPENAI_API_KEY: ''
+  UPSTASH_VECTOR_REST_URL: ''
+  UPSTASH_VECTOR_REST_TOKEN: ''
+
+# # Optional: Network settings
+# network:
+#   session_affinity: true
+
+# # Optional: Health checks
+# health_check:
+#   enable_health_check: True
+#   check_interval_sec: 30
+#   timeout_sec: 4
+#   unhealthy_threshold: 2
+#   healthy_threshold: 2
+
+# Optional: Resources
+resources:
+  cpu: 1
+  memory_gb: 2
+  disk_size_gb: 10
+
+# # Optional: Service name
+# service: default
+
+entrypoint: streamlit run --server.port=8080 --server.address=0.0.0.0 --server.enableCORS=false --server.enableWebsocketCompression=false --server.enableXsrfProtection=false --server.headless=true bapp.py
